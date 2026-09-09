@@ -1,5 +1,9 @@
 name: Register, Update or Clean Plugins
 
+concurrency:
+  group: plugin-registration
+  cancel-in-progress: false
+
 on:
   issues:
     types: [opened, edited]
