@@ -23,8 +23,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (
         (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
-        github.actor != 'github-actions[bot]' &&
-        (contains(github.event.issue.body, 'github.com') || contains(github.event.comment.body, 'github.com'))
+        github.actor != 'github-actions[bot]'
       )
     runs-on: ubuntu-latest
     permissions:
@@ -42,8 +41,11 @@ jobs:
 
       - name: Process Registration or Clean Index
         env:
+          EVENT_NAME: ${{ github.event_name }}
           ISSUE_BODY: ${{ github.event.comment.body || github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.actor }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONPATH: .
         run: |

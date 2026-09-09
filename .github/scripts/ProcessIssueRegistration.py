@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib.request
 from datetime import datetime
 
 # 允许提交的白名单文件扩展名
@@ -46,8 +47,8 @@ FORBIDDEN_EXTENSIONS = {
 }
 
 
-def logAndExit(message, isSuccess=False):
-    """输出诊断日志并在 GitHub Issue 下回复"""
+def logAndExit(message, isSuccess=False, addLabels=None):
+    """输出诊断日志并在 GitHub Issue 下回复，可指定打上的 Label"""
     issueNumber = os.getenv("ISSUE_NUMBER")
     ghToken = os.getenv("GH_TOKEN")
 
@@ -69,20 +70,107 @@ def logAndExit(message, isSuccess=False):
             check=False,
         )
         if not isSuccess:
-            subprocess.run(
-                [
-                    "gh",
-                    "issue",
-                    "edit",
-                    issueNumber,
-                    "--add-label",
-                    "invalid",
-                ],
-                check=False,
-            )
+            labels = addLabels if addLabels else ["invalid"]
+            for label in labels:
+                subprocess.run(
+                    [
+                        "gh",
+                        "issue",
+                        "edit",
+                        issueNumber,
+                        "--add-label",
+                        label,
+                    ],
+                    check=False,
+                )
 
     print(message)
     sys.exit(0 if isSuccess else 1)
+
+
+def checkUserAccountAge(username):
+    """校验 GitHub 账号注册时长，要求必须满 7 天"""
+    ghToken = os.getenv("GH_TOKEN")
+    if not ghToken or not username:
+        return True, 0
+
+    url = f"https://api.github.com/users/{username}"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"token {ghToken}",
+            "User-Agent": "Plugin-Register-Bot",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            createdAtStr = data.get("created_at")
+            if createdAtStr:
+                createdAt = datetime.strptime(
+                    createdAtStr, "%Y-%m-%d%H:%M:%SZ"
+                )
+                daysOld = (datetime.utcnow() - createdAt).days
+                if daysOld < 7:
+                    return False, daysOld
+    except Exception as e:
+        print(f"⚠️ 账号注册天数查询跳过: {e}")
+    return True, 0
+
+
+def checkTitleUniquenessAndGetOriginalIssue(issueTitle, currentIssueNum):
+    """检查 Issue 标题唯一性，发现同标题更早提交的 Issue 则提示警报"""
+    ghToken = os.getenv("GH_TOKEN")
+    if not ghToken or not issueTitle or not currentIssueNum:
+        return True, None
+
+    try:
+        # 使用 gh cli 查询相同标题的所有 Issue
+        cmd = [
+            "gh",
+            "issue",
+            "list",
+            "--search",
+            f'"{issueTitle}" in:title',
+            "--json",
+            "number,title",
+            "--state",
+            "all",
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if res.returncode == 0:
+            issues = json.loads(res.stdout)
+            currNumInt = int(currentIssueNum)
+            earlierIssues = []
+
+            for issue in issues:
+                # 只有标题完全一致才视为重复
+                if issue.get("title", "").strip() == issueTitle.strip():
+                    num = int(issue.get("number"))
+                    if num < currNumInt:
+                        earlierIssues.append(num)
+
+            if earlierIssues:
+                earlierIssues.sort()
+                return False, earlierIssues[0]
+    except Exception as e:
+        print(f"⚠️ 校验标题唯一性查询跳过: {e}")
+
+    return True, None
+
+
+def fetchFirstIssueBody(issueNumber):
+    """使用 GitHub API 获取 Issue 的第一条主贴内容（排除评论）"""
+    ghToken = os.getenv("GH_TOKEN")
+    if not ghToken or not issueNumber:
+        return ""
+
+    cmd = ["gh", "issue", "view", str(issueNumber), "--json", "body"]
+    res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if res.returncode == 0:
+        data = json.loads(res.stdout)
+        return data.get("body", "").strip()
+    return ""
 
 
 def loadBlacklist():
@@ -95,7 +183,6 @@ def loadBlacklist():
         try:
             with open(blacklistFile, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 统一转小写，方便不区分大小写比较
                 blockedUsers = {
                     user.strip().lower()
                     for user in data.get("blockedUsers", [])
@@ -132,7 +219,7 @@ def extractOwnerAndRepoFromUrl(repoUrl):
 
 
 def purgeFromIndex(indexData, blockedUsers, blockedRepos):
-    """全量清洗 indexData，只要 GitHub 用户名(Owner)、插件作者(Author) 或 仓库地址命中黑名单即移除"""
+    """全量清洗 indexData"""
     if "plugins" not in indexData:
         return False, indexData
 
@@ -143,21 +230,14 @@ def purgeFromIndex(indexData, blockedUsers, blockedRepos):
         repoUrl = pluginInfo.get("repoUrl", "")
         githubOwner, repoName = extractOwnerAndRepoFromUrl(repoUrl)
 
-        # 1. 获取要比对的几个关键标识（全部转小写）
-        pluginAuthor = (
-            pluginInfo.get("author", "").lower()
-        )  # 代码里写死的 author 字段
-        githubOwner = githubOwner.lower()  # GitHub 用户名
-        fullRepoPath = f"{githubOwner}/{repoName}".lower()  # owner/repo 路径
+        pluginAuthor = pluginInfo.get("author", "").lower()
+        githubOwner = githubOwner.lower()
+        fullRepoPath = f"{githubOwner}/{repoName}".lower()
 
-        # 2. 检查 GitHub 用户名 或 作者名 是否在 blockedUsers 黑名单中
-        isUserBlocked = (
-            githubOwner in blockedUsers
-        ) or (
+        isUserBlocked = (githubOwner in blockedUsers) or (
             pluginAuthor in blockedUsers
         )
 
-        # 3. 检查 仓库路径 或 完整URL 是否在 blockedRepos 黑名单中
         isRepoBlocked = False
         for blockedRepo in blockedRepos:
             if (
@@ -168,7 +248,6 @@ def purgeFromIndex(indexData, blockedUsers, blockedRepos):
                 isRepoBlocked = True
                 break
 
-        # 4. 执行移除逻辑
         if isUserBlocked or isRepoBlocked:
             removedCount += 1
             reason = (
@@ -263,8 +342,11 @@ def parsePluginInfoViaAst(filePath):
 def main():
     blockedUsers, blockedRepos = loadBlacklist()
 
-    issueBody = os.getenv("ISSUE_BODY", "")
+    eventName = os.getenv("EVENT_NAME", "")
+    issueBody = os.getenv("ISSUE_BODY", "").strip()
+    issueTitle = os.getenv("ISSUE_TITLE", "").strip()
     issueNumber = os.getenv("ISSUE_NUMBER", "")
+    issueAuthor = os.getenv("ISSUE_AUTHOR", "")
 
     indexFile = "index.json"
     indexData = {}
@@ -276,14 +358,13 @@ def main():
                 indexData = {}
 
     urlPattern = r"https://github\.com/([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)"
-    match = re.search(urlPattern, issueBody) if issueBody else None
 
     # =============================================================
     # 1. 全量清洗：修改 blacklist.json / 定时任务 / 手动触发
     # =============================================================
-    if not match:
+    if eventName in ["push", "schedule", "workflow_dispatch"]:
         print(
-            "💡 未检测到 Issue 注册请求，开始对 index.json 执行全量黑名单清理巡检..."
+            "💡 收到系统巡检事件，开始对 index.json 执行全量黑名单清理巡检..."
         )
         hasChanges, indexData = purgeFromIndex(
             indexData, blockedUsers, blockedRepos
@@ -297,10 +378,74 @@ def main():
             print("✨ 巡检完成，index.json 中未发现任何黑名单项目。")
         return
 
+    # 没有获取到 Issue 编号，不进行 Issue 注册处理
+    if not issueNumber:
+        return
+
     # =============================================================
-    # 2. Issue 注册流程：提交校验与防穿透
+    # 2. 安全防刷 1：账号注册时长校验（必须 >= 7 天）
     # =============================================================
-    githubOwner, repoName = match.group(1), match.group(2).replace(".git", "")
+    isOldEnough, daysOld = checkUserAccountAge(issueAuthor)
+    if not isOldEnough:
+        logAndExit(
+            f"安全防刷拦截：你的 GitHub 账号注册时长仅为 `{daysOld}` 天。\n"
+            f"为了防止自动化脚本灌水，本仓库要求提交者账号必须注册满 **7 天** 以上！"
+        )
+
+    # =============================================================
+    # 3. 校验 Issue 标题：必须为 "作者名_插件名" 格式
+    # =============================================================
+    if "_" not in issueTitle:
+        logAndExit(
+            f"Issue 标题 `{issueTitle}` 不符合规范！必须严格为 `作者名_插件名` 格式（如 `IYATT_DemoPlugin`）。"
+        )
+
+    titleParts = issueTitle.split("_")
+    if len(titleParts) < 2 or not titleParts[0] or not titleParts[1]:
+        logAndExit(
+            f"Issue 标题 `{issueTitle}` 解析失败！必须为 `作者名_插件名` 格式。"
+        )
+
+    expectedAuthorFromTitle = titleParts[0]
+    expectedPluginFromTitle = "_".join(titleParts[1:])
+    expectedPluginId = issueTitle  # 即 作者名_插件名
+
+    # =============================================================
+    # 4. 校验 Issue 标题唯一性（禁止重复发 Issue）
+    # =============================================================
+    isUnique, originalIssueNum = checkTitleUniquenessAndGetOriginalIssue(
+        issueTitle, issueNumber
+    )
+    if not isUnique:
+        logAndExit(
+            f"⚠️ 判定为重复提交！系统检测到插件 ID `{expectedPluginId}` 已存在早期提交的 Issue #{originalIssueNum}。\n"
+            f"同名插件只能使用最初创建的 Issue 进行管理与更新。管理员已收到警告，将人工复核处理。",
+            isSuccess=False,
+            addLabels=["invalid", "duplicate"],
+        )
+
+    # =============================================================
+    # 5. 校验 Issue 内容规范（第一条与后续更新）
+    # =============================================================
+    firstBody = fetchFirstIssueBody(issueNumber)
+    firstMatch = re.search(urlPattern, firstBody) if firstBody else None
+
+    if not firstMatch:
+        logAndExit(
+            "Issue 规则校验失败：Issue 的第 1 条内容（主贴）必须且仅能提交该插件的 GitHub 仓库地址！"
+        )
+
+    # 如果是评论（issue_comment），内容必须严格为 'update'
+    if eventName == "issue_comment":
+        if issueBody.lower() != "update":
+            logAndExit(
+                "互动规则拦截：后续更新只能在评论区发送 `update`！发送其他文字或自定义内容将被系统拦截。"
+            )
+
+    # 从 Issue 首贴的链接中解析 GitHub 仓库
+    githubOwner, repoName = firstMatch.group(1), firstMatch.group(
+        2
+    ).replace(".git", "")
     fullRepoPath = f"{githubOwner}/{repoName}".lower()
     repoUrl = f"https://github.com/{githubOwner}/{repoName}.git"
 
@@ -312,16 +457,26 @@ def main():
         with open(indexFile, "w", encoding="utf-8") as file:
             json.dump(indexData, file, indent=2, ensure_ascii=False)
         logAndExit(
-            f"GitHub 账号 `{githubOwner}` 或仓库 `{fullRepoPath}` 已被列入黑名单，拒绝注册并自动清理现有索引！"
+            f"GitHub 账号 `{githubOwner}` 或仓库 `{fullRepoPath}` 已被列入黑名单，拒绝注册！"
         )
 
-    # 格式校验
-    if "_" not in repoName:
+    # =============================================================
+    # 6. 一致性校验：项目名与 Issue 标题比对
+    # =============================================================
+    if repoName != expectedPluginId:
         logAndExit(
-            f"仓库名称 `{repoName}` 不符合规范！必须为 `作者名_插件名` 格式（如 `IYATT_BatchMergeByColumns`）。"
+            f"名称不一致：GitHub 仓库名 `{repoName}` 必须与 Issue 标题 `{expectedPluginId}` 保持完全一致！"
         )
 
-    # Clone 仓库
+    # 校验是否为跨账号重复注册（相同插件 ID 但 GitHub Owner 不同）
+    if "plugins" in indexData and repoName in indexData["plugins"]:
+        existingOwner = indexData["plugins"][repoName].get("owner", "")
+        if existingOwner and existingOwner.lower() != githubOwner.lower():
+            logAndExit(
+                f"注册冲突：插件 ID `{repoName}` 已经被 GitHub 用户 `{existingOwner}` 占用，拒绝更换账号注册！"
+            )
+
+    # Clone 仓库进行深度校验
     tempDir = f"/tmp/pluginCheck_{repoName}"
     subprocess.run(["rm", "-rf", tempDir], check=False)
     cloneResult = subprocess.run(
@@ -342,23 +497,36 @@ def main():
         .strip()
     )
 
+    # 入口文件必须严格为: 作者名_插件名.py
     entryFileName = f"{repoName}.py"
     entryFilePath = os.path.join(tempDir, entryFileName)
     if not os.path.exists(entryFilePath):
-        logAndExit(f"仓库根目录下未找到主入口文件 `{entryFileName}`！")
+        logAndExit(
+            f"仓库根目录下未找到对应的入口文件 `{entryFileName}`！入口文件名必须与插件 ID 完全同名。"
+        )
 
     try:
         pluginInfo = parsePluginInfoViaAst(entryFilePath)
     except Exception as error:
         logAndExit(f"解析入口文件 `{entryFileName}` 失败：{str(error)}")
 
+    # 必须包含 4 个核心字段：name, author, description, version
     name = pluginInfo.get("name")
     author = pluginInfo.get("author")
-    description = pluginInfo.get("description", "")
-    version = pluginInfo.get("version", "0.0.1")
+    description = pluginInfo.get("description")
+    version = pluginInfo.get("version")
 
-    if not name or not author:
-        logAndExit("`pluginInfo` 字典中必须包含 `name` 与 `author` 字段！")
+    if not name or not author or description is None or not version:
+        logAndExit(
+            "元数据不完整：入口文件中的 `pluginInfo` 字典必须完整包含 `name`、`author`、`description` 和 `version` 这 4 个字段！"
+        )
+
+    # 元数据一致性校验：name 必须为 插件名，author 必须为 作者名
+    if name != expectedPluginFromTitle or author != expectedAuthorFromTitle:
+        logAndExit(
+            f"元数据不匹配：`pluginInfo` 中的 `author` (`{author}`) 和 `name` (`{name}`) "
+            f"必须与 Issue 标题中的作者名 (`{expectedAuthorFromTitle}`) 及插件名 (`{expectedPluginFromTitle}`) 完全一致！"
+        )
 
     # 校验代码里的 author 字段是否在黑名单中
     if author.lower() in blockedUsers:
@@ -366,18 +534,18 @@ def main():
         with open(indexFile, "w", encoding="utf-8") as file:
             json.dump(indexData, file, indent=2, ensure_ascii=False)
         logAndExit(
-            f"插件作者 `{author}` 已被列入黑名单，拒绝注册并自动清理现有索引！"
+            f"插件作者 `{author}` 已被列入黑名单，拒绝注册！"
         )
 
-    # 正常写入 index.json，增加 owner 标识
+    # 写入 index.json
     if "plugins" not in indexData:
         indexData["plugins"] = {}
 
     currentTime = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
     indexData["plugins"][repoName] = {
-        "owner": githubOwner,  # 显式记录 GitHub 用户名
-        "author": author,  # 代码中声明的作者名
+        "owner": githubOwner,
+        "author": author,
         "pluginName": name,
         "description": description,
         "repoUrl": f"https://github.com/{githubOwner}/{repoName}",
@@ -394,6 +562,7 @@ def main():
 
 索引已更新并写入中心仓库：
 
+* **插件 ID**：`{repoName}`
 * **GitHub 账号**：`{githubOwner}`
 * **作者**：`{author}`
 * **插件名**：`{name}`
