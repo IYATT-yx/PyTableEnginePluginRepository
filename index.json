@@ -1,6 +1,7 @@
 {
   "plugins": {
     "IYATT_BatchMergeByColumns": {
+      "owner": "IYATT-yx",
       "author": "IYATT",
       "pluginName": "BatchMergeByColumns",
       "description": "按列批量合并选中区域",
@@ -8,7 +9,7 @@
       "entryFile": "IYATT_BatchMergeByColumns.py",
       "version": "0.0.1",
       "commitHash": "f3529409a2208b6a4db412dd69bf1103fbf97a3a",
-      "updatedAt": "2026-09-09 15:26:32 UTC"
+      "updatedAt": "2026-09-09 17:02:55 UTC"
     }
   }
 }
