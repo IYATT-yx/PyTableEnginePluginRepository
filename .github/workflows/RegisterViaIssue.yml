@@ -1,14 +1,31 @@
-name: Register or Update Plugin via Issue
+name: Register, Update or Clean Plugins
 
 on:
   issues:
     types: [opened, edited]
   issue_comment:
     types: [created]
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'blacklist.json'
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   processPlugin:
-    if: contains(github.event.issue.body, 'github.com') && github.actor != 'github-actions[bot]'
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (
+        (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
+        github.actor != 'github-actions[bot]' &&
+        (contains(github.event.issue.body, 'github.com') || contains(github.event.comment.body, 'github.com'))
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,11 +38,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: '3.10'
 
-      - name: Process Registration & Update Index
+      - name: Process Registration or Clean Index
         env:
-          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_BODY: ${{ github.event.comment.body || github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONPATH: .
@@ -38,11 +55,12 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.json
           if ! git diff --cached --quiet; then
-            git commit -m "auto: update plugin index for Issue #${{ github.event.issue.number }}"
+            git commit -m "auto: update/clean plugin index"
             git push
           fi
 
       - name: Close Issue on Success
+        if: (github.event_name == 'issues' || github.event_name == 'issue_comment') && github.event.issue.number != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
