@@ -1,3 +1,10 @@
+'''
+file: ProcessIssueRegistration.py
+description: 处理 GitHub Issue 提交的插件注册请求
+author: IYATT-yx
+copyright:  Copyright (c) 2026 IYATT-yx.
+            Licensed under the MIT License. See LICENSE file in the project root for full license information.
+'''
 import ast
 import json
 import os
