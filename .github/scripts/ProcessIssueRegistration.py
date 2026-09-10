@@ -27,6 +27,9 @@ ALLOWED_EXTENSIONS = {
     ".ini",
     ".cfg",
     ".LICENSE",
+    ".cmd",
+    ".bat",
+    ".ps1"
     "",  # 无后缀文件
 }
 
@@ -273,14 +276,27 @@ def purgeFromIndex(indexData, blockedUsers, blockedRepos):
 
 
 def isBinaryFile(filePath):
-    """检测文件前 1024 字节是否存在 Null Byte（判断二进制）"""
+    """检测文件是否为二进制文件（兼容 UTF-16/UTF-8 文本）"""
     try:
         with open(filePath, "rb") as file:
             chunk = file.read(1024)
+            if not chunk:
+                return False
+
+            # 1. 尝试使用常见文本编码解码，如果能成功解码，说明是文本文件（解决 UTF-16 误判问题）
+            for encoding in ("utf-8", "gbk", "utf-16"):
+                try:
+                    chunk.decode(encoding)
+                    return False  # 解码成功，判定为文本文件
+                except (UnicodeDecodeError, UnicodeError):
+                    continue
+
+            # 2. 如果常规文本编码均解码失败，回退到 Null Byte 判定
             if b"\x00" in chunk:
                 return True
     except Exception:
         return True
+
     return False
 
 
