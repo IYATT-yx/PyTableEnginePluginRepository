@@ -10,6 +10,17 @@
       "version": "0.0.1",
       "commitHash": "aae693b00b9d4393b5d7eae91ad764f4878387ab",
       "updatedAt": "2026-09-11 04:54:42 UTC"
+    },
+    "IYATT_KeepFormat": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "KeepFormat",
+      "description": "固化条件格式为静态格式并删除规则",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_KeepFormat",
+      "entryFile": "IYATT_KeepFormat.py",
+      "version": "0.0.1",
+      "commitHash": "f52f5e24bae8830ad321764f7a8aa4dbc0b61d35",
+      "updatedAt": "2026-09-11 16:30:01 UTC"
     }
   }
 }
