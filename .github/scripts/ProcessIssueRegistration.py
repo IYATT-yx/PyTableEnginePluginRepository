@@ -29,7 +29,7 @@ ALLOWED_EXTENSIONS = {
     ".LICENSE",
     ".cmd",
     ".bat",
-    ".ps1"
+    ".ps1",
     "",  # 无后缀文件
 }
 
