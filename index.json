@@ -7,9 +7,9 @@
       "description": "按列批量合并选中区域",
       "repoUrl": "https://github.com/IYATT-yx/IYATT_BatchMergeByColumns",
       "entryFile": "IYATT_BatchMergeByColumns.py",
-      "version": "0.0.1",
-      "commitHash": "aae693b00b9d4393b5d7eae91ad764f4878387ab",
-      "updatedAt": "2026-09-11 04:54:42 UTC"
+      "version": "0.0.2",
+      "commitHash": "5a52f014b62cfc6050d6cf19004ac372cc84fd62",
+      "updatedAt": "2026-09-11 16:31:30 UTC"
     },
     "IYATT_KeepFormat": {
       "owner": "IYATT-yx",
