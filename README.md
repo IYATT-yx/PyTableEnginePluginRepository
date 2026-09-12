@@ -3,6 +3,7 @@
 ## 简介 / Introduction
 
 本仓库用于集中索引与自动化注册第三方插件，以支持 [PyTableEngine](https://github.com/IYATT-yx/PyTableEngine) 工具。  
+如有疑问，请前往 PyTableEngine 仓库提交 Issue，本仓库只接收插件注册申请（自动审批）。  
 
 GitHub 仓库地址：https://github.com/IYATT-yx/PyTableEnginePluginRepository  
 配置中应填写：https://raw.githubusercontent.com/IYATT-yx/PyTableEnginePluginRepository/main/index.json  
@@ -13,6 +14,7 @@ Gitee 仓库地址（大陆建议）：https://gitee.com/iyatt/PyTableEnginePlug
 ---
 
 This repository is used to centralize the indexing and automated registration of third-party plugins to support the [PyTableEngine](https://github.com/IYATT-yx/PyTableEngine) tool.  
+For questions, please submit an Issue to the PyTableEngine repository. This repository only accepts plugin registration requests (automatically approved).  
 
 GitHub Repository: https://github.com/IYATT-yx/PyTableEnginePluginRepository  
 Configuration should be filled: https://raw.githubusercontent.com/IYATT-yx/PyTableEnginePluginRepository/main/index.json  
