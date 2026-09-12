@@ -5,10 +5,10 @@
 本仓库用于集中索引与自动化注册第三方插件，以支持 [PyTableEngine](https://github.com/IYATT-yx/PyTableEngine) 工具。  
 如有疑问，请前往 PyTableEngine 仓库提交 Issue，本仓库只接收插件注册申请（自动审批）。  
 
-GitHub 仓库地址：https://github.com/IYATT-yx/PyTableEnginePluginRepository  
+GitHub 插件中心仓库地址：https://github.com/IYATT-yx/PyTableEnginePluginRepository  
 配置中应填写：https://raw.githubusercontent.com/IYATT-yx/PyTableEnginePluginRepository/main/index.json  
 
-Gitee 仓库地址（大陆建议）：https://gitee.com/iyatt/PyTableEnginePluginRepository  
+Gitee 插件中心仓库地址（大陆建议）：https://gitee.com/iyatt/PyTableEnginePluginRepository  
 配置中应填写：https://gitee.com/iyatt/PyTableEnginePluginRepository/raw/main/index.json  
 
 ---
