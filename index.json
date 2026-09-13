@@ -21,6 +21,17 @@
       "version": "0.0.1",
       "commitHash": "f52f5e24bae8830ad321764f7a8aa4dbc0b61d35",
       "updatedAt": "2026-09-11 16:30:01 UTC"
+    },
+    "IYATT_CopyMergedByMatrix": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "CopyMergedByMatrix",
+      "description": "按逻辑行列推演，跨合并单元格/阵列结构化复制填充数据",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_CopyMergedByMatrix",
+      "entryFile": "IYATT_CopyMergedByMatrix.py",
+      "version": "0.0.2",
+      "commitHash": "47a1a4572d2ad70bcf037c21c947d5f06bd963d2",
+      "updatedAt": "2026-09-13 13:53:33 UTC"
     }
   }
 }
