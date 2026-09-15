@@ -32,6 +32,17 @@
       "version": "0.0.2",
       "commitHash": "47a1a4572d2ad70bcf037c21c947d5f06bd963d2",
       "updatedAt": "2026-09-13 13:53:33 UTC"
+    },
+    "IYATT_BatchDeleteRowsOrColsByContent": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "BatchDeleteRowsOrColsByContent",
+      "description": "在单行的整行或单列的整列中检索关键字，匹配则删除对应的列或行",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_BatchDeleteRowsOrColsByContent",
+      "entryFile": "IYATT_BatchDeleteRowsOrColsByContent.py",
+      "version": "0.0.1",
+      "commitHash": "834b0343d19131228eeccc831f88b7eca691d9f5",
+      "updatedAt": "2026-09-15 16:08:46 UTC"
     }
   }
 }
