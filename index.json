@@ -43,6 +43,17 @@
       "version": "0.0.1",
       "commitHash": "834b0343d19131228eeccc831f88b7eca691d9f5",
       "updatedAt": "2026-09-15 16:08:46 UTC"
+    },
+    "IYATT_FillRandomFormula": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "FillRandomFormula",
+      "description": "解析或手动调整规格，生成带边界缩减与自定义步长的动态随机公式",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_FillRandomFormula",
+      "entryFile": "IYATT_FillRandomFormula.py",
+      "version": "0.0.1",
+      "commitHash": "5ec64f9adb3ec797045ee640a439034899577996",
+      "updatedAt": "2026-09-16 16:43:59 UTC"
     }
   }
 }
