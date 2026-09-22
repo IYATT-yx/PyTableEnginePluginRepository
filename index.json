@@ -54,6 +54,17 @@
       "version": "0.0.1",
       "commitHash": "5830f20e9c2963eeeb1bb0230a9c4d91b8f68e66",
       "updatedAt": "2026-09-21 03:00:17 UTC"
+    },
+    "IYATT_FixFormulasToValues": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "FixFormulasToValues",
+      "description": "将选中区域的公式固定为静态值",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_FixFormulasToValues",
+      "entryFile": "IYATT_FixFormulasToValues.py",
+      "version": "0.0.1",
+      "commitHash": "9ce498ec94a3a5105f1169518edec2496e2eeb34",
+      "updatedAt": "2026-09-22 14:16:15 UTC"
     }
   }
 }
