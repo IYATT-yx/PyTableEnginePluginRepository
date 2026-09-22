@@ -65,6 +65,17 @@
       "version": "0.0.1",
       "commitHash": "9ce498ec94a3a5105f1169518edec2496e2eeb34",
       "updatedAt": "2026-09-22 14:16:15 UTC"
+    },
+    "IYATT_DeletePicturesInSelection": {
+      "owner": "IYATT-yx",
+      "author": "IYATT",
+      "pluginName": "DeletePicturesInSelection",
+      "description": "批量删除悬浮在选中区域内的图片",
+      "repoUrl": "https://github.com/IYATT-yx/IYATT_DeletePicturesInSelection",
+      "entryFile": "IYATT_DeletePicturesInSelection.py",
+      "version": "0.0.1",
+      "commitHash": "2d1b10ad3828a46f745645119e3c01804c575b37",
+      "updatedAt": "2026-09-22 14:54:13 UTC"
     }
   }
 }
