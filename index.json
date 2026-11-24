@@ -48,12 +48,12 @@
       "owner": "IYATT-yx",
       "author": "IYATT",
       "pluginName": "FillRandomFormula",
-      "description": "解析或手动调整规格，生成带边界缩减与自定义步长的动态随机公式",
+      "description": "尺寸报告随机公式填充",
       "repoUrl": "https://github.com/IYATT-yx/IYATT_FillRandomFormula",
       "entryFile": "IYATT_FillRandomFormula.py",
-      "version": "0.0.1",
-      "commitHash": "5830f20e9c2963eeeb1bb0230a9c4d91b8f68e66",
-      "updatedAt": "2026-09-21 03:00:17 UTC"
+      "version": "0.0.2",
+      "commitHash": "b6d2356318e48c00126dfb4d7cd89703a97deeba",
+      "updatedAt": "2026-11-24 02:57:16 UTC"
     },
     "IYATT_FixFormulasToValues": {
       "owner": "IYATT-yx",
