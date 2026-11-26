@@ -51,9 +51,9 @@
       "description": "尺寸报告随机公式填充",
       "repoUrl": "https://github.com/IYATT-yx/IYATT_FillRandomFormula",
       "entryFile": "IYATT_FillRandomFormula.py",
-      "version": "0.0.2",
-      "commitHash": "b6d2356318e48c00126dfb4d7cd89703a97deeba",
-      "updatedAt": "2026-11-24 02:57:16 UTC"
+      "version": "0.0.3",
+      "commitHash": "287ae3a61151a7c7b9313e1f1c59dcba161680e1",
+      "updatedAt": "2026-11-26 15:33:26 UTC"
     },
     "IYATT_FixFormulasToValues": {
       "owner": "IYATT-yx",
